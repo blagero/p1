@@ -83,6 +83,30 @@ const locations = [
 		"button functions": [attack, dodge, goTown],
 		text: "You are fighting a monster."
 	},
+    {
+		name: "kill monster",
+		"button text": ["Go to town square", "Go to town square", "Go to town square"],
+		"button functions": [goTown, goTown,easterEgg],
+		text: 'The monster screams "Arg!" as it dies. You gain experience points and find gold.'
+	},
+	{
+		name: "lose",
+		"button text": ["REPLAY?", "REPLAY?", "REPLAY?"],
+		"button functions": [restart, restart, restart],
+		text: "You die. ☠️"
+	},
+	{
+		name: "win",
+		"button text": ["REPLAY?", "REPLAY?", "REPLAY?"],
+		"button functions": [restart, restart, restart],
+		text: "You defeat the dragon! YOU WIN THE GAME! 🎉"
+    },
+	{
+		name: "easter egg",
+		"button text": ["2", "8", "Go to town square?"],
+		"button functions": [pickTwo, pickEight, goTown],
+		text: "You find a secret game. Pick a number above. Ten numbers will be randomly chosen between 0 and 10. If the number you choose matches one of the random numbers, you win!"
+	}
 ];
 
 
@@ -92,6 +116,7 @@ button3.onclick = fightDragon;
 
 
 function update(location){
+    monsterStats.style.display = "none";
     button1.innerHTML = location["button text"][0];
     button2.innerHTML = location["button text"][1];
     button3.innerHTML = location["button text"][2];
@@ -112,7 +137,7 @@ function goStore(){
 }
 
 function goCave(){
-
+    update(locations[2]);
 }
 
 
@@ -177,17 +202,102 @@ function goFight(){
 
 function attack(){
     text.innerHTML = `The ${monsters[fighting].name} attacks`
-    text.innerHTML += `${"<br>"} You attack with ${weapons[currentWeapon]}`
-    health -= monsters[fighting].level;
+    text.innerHTML += `${"<br>"} You attack with ${weapons[currentWeapon]["name"]}`
+    if(isMonsterHit()){
+        health -= getMonsterAttackValue(monsters[fighting].level);
+    }else text.innerHTML += "You miss"
+    
     monsterHealth -=weapons[currentWeapon].power + Math.floor(Math.random() * xp) +1;
     healthText.innerHTML=health;
     monsterHealthText.innerHTML =monsterHealth;
-    if(health <=0){
-        lose();
-    }
     
+    if(health <= 0){
+        lose();
+    }else if(monsterHealth <= 0) {
+        
+        fighting === 2 ? winGame() : defeatMonster();
+    }
+
+    if(Math.random() <= .1 && inventory.length !== 1) {
+        text.innerHTML += `Your ${inventory.pop()} breaks`;
+        currentWeapon--;
+    }
+}
+function getMonsterAttackValue(level){
+    let hit =(level * 5) - (Math.floor(Math.random() * xp));
+    return hit;
+}
+
+function isMonsterHit(){
+    return Math.random() > .2 || health <20;
 }
 
 function dodge(){
+    text.innerHTML = `You dodge the attack from ${monsters[fighting].name}`
+}
+function defeatMonster(){
+    gold += Math.floor(monsters[fighting].level * 6.7)
+    xp += monsters[fighting].level;
+    goldText.innerHTML = gold;
+    xpText.innerHTML = xp;
+    update(locations[4]);
+}
+function lose(){
+    update(locations[5]);
 
+}
+
+function winGame(){
+    update(locations[6]);
+}
+
+function restart() {
+	xp = 0;
+	health = 100;
+	gold = 50;
+	currentWeapon = 0;
+	inventory = ["stick"];
+	goldText.innerText = gold;
+	healthText.innerText = health;
+	xpText.innerText = xp;
+	goTown();
+}
+
+function easterEgg(){
+    update(locations[7])
+}
+
+function pickTwo(){
+    pick(2);
+}
+
+function pickEight(){
+    pick(8);
+}
+
+function pick(guess){
+    let numbers = []
+    while(numbers.length < 10){
+        numbers.push(Math.floor(Math.random() * 11))
+    }
+
+    text.innerHTML = `You picked ${guess} Random numbers:\n`
+
+    for(let i = 0; i< 10;i++){
+        text.innerHTML += numbers[i] + "\n";
+
+    }
+    if(numbers.indexOf(guess) !== -1){
+        text.innerHTML +="You win 20 gold"
+        gold += 20;
+        goldText.innerHTML = gold;
+    }
+    else{
+        text.innerHTML += "Wrong you lose 10 health"
+        health -= 10;
+        healthText.innerHTML = health;
+        if(health <= 0 ){
+            lose();
+        }
+    }
 }
